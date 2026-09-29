@@ -21,6 +21,7 @@ class RubricItem(BaseModel):
 class Question(BaseModel):
     question: str
     marks: int
+    rubric: list[RubricItem]
 
 
 class Assignment(BaseModel):
@@ -29,7 +30,6 @@ class Assignment(BaseModel):
     topic: str
     difficulty: str
     questions: list[Question]
-    rubric: list[RubricItem]
     total_marks: int
     suggested_deadline: str
 
@@ -44,31 +44,35 @@ def create_assignment(request: AssignmentRequest):
 
     questions = []
 
+    question_marks = request.total_marks // request.number_of_questions
+
     for i in range(request.number_of_questions):
+
+        rubric = [
+            RubricItem(
+                criterion="Correctness",
+                description="The solution produces the correct result.",
+                marks=2
+            ),
+            RubricItem(
+                criterion="Logic",
+                description="The solution uses appropriate programming logic.",
+                marks=1
+            ),
+            RubricItem(
+                criterion="Code Quality",
+                description="The code is clear, readable, and properly structured.",
+                marks=1
+            )
+        ]
+
         question = Question(
             question=f"Sample question {i + 1} about {request.topic}",
-            marks=request.total_marks // request.number_of_questions
+            marks=question_marks,
+            rubric=rubric
         )
 
         questions.append(question)
-
-    rubric = [
-        RubricItem(
-            criterion="Correctness",
-            description="The solution produces the correct result.",
-            marks=8
-        ),
-        RubricItem(
-            criterion="Logic",
-            description="The solution uses appropriate programming logic.",
-            marks=6
-        ),
-        RubricItem(
-            criterion="Code Quality",
-            description="The code is clear, readable, and properly structured.",
-            marks=6
-        )
-    ]
 
     assignment = Assignment(
         title=f"{request.course} - {request.topic}",
@@ -76,7 +80,6 @@ def create_assignment(request: AssignmentRequest):
         topic=request.topic,
         difficulty=request.difficulty,
         questions=questions,
-        rubric=rubric,
         total_marks=request.total_marks,
         suggested_deadline="2026-10-05"
     )
